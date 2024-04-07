@@ -22,7 +22,7 @@ if "PINECONE_ENVIRONMENT" not in st.session_state:
 
 st.set_page_config(page_title="欢迎使用Chat GPT", layout="wide")
 
-st.title("😏 欢迎使用Chat GPT")
+st.title("欢迎使用Chat GPT")
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
