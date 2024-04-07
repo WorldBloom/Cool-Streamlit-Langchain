@@ -20,16 +20,16 @@ if "PINECONE_API_KEY" not in st.session_state:
 if "PINECONE_ENVIRONMENT" not in st.session_state:
     st.session_state["PINECONE_ENVIRONMENT"] = ""
 
-st.set_page_config(page_title="Welcome to ASL", layout="wide")
+st.set_page_config(page_title="欢迎使用Chat GPT", layout="wide")
 
-st.title("🤠 Welcome to ASL")
+st.title("😏 欢迎使用Chat GPT")
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
 if chat:
     with st.container():
-        st.header("Chat with GPT")
+        st.header("今天我能帮你做些什么？")
 
         for message in st.session_state["messages"]:
             if isinstance(message, HumanMessage):
@@ -38,7 +38,7 @@ if chat:
             elif isinstance(message, AIMessage):
                 with st.chat_message("assistant"):
                     st.markdown(message.content)
-        prompt = st.chat_input("Type something...")
+        prompt = st.chat_input("请在此输入")
         if prompt:
             st.session_state["messages"].append(HumanMessage(content=prompt))
             with st.chat_message("user"):
