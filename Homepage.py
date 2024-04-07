@@ -29,7 +29,7 @@ if "messages" not in st.session_state:
 
 if chat:
     with st.container():
-        st.header("今天我能帮你做些什么？")
+        st.header("😉 今天我能帮你做些什么？")
 
         for message in st.session_state["messages"]:
             if isinstance(message, HumanMessage):
@@ -49,4 +49,4 @@ if chat:
                 st.markdown(ai_message.content)
 else:
     with st.container():
-        st.warning("Please set your OpenAI API key in the settings page.")
+        st.warning("请在设定页面输入OpenAI API key")
