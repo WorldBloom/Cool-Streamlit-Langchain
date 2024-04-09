@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 from sklearn.preprocessing import LabelEncoder
 # 显示标题
 st.title('Titanic :blue[Machine Learning]🚢')
