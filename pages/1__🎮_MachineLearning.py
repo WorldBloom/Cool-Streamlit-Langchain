@@ -5,6 +5,7 @@ import sklearn
 from sklearn.preprocessing import LabelEncoder
 # 显示标题
 st.title('Titanic :blue[Machine Learning]🚢')
+st.markdown("Github开源链接:https://github.com/WorldBloom/Cool-Streamlit-Langchain")
 # 显示章节标题
 st.header('问题的简单介绍')
 #介绍文字
