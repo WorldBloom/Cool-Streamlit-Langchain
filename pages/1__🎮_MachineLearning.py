@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import sklearn
 from sklearn.preprocessing import LabelEncoder
 # 显示标题
@@ -107,25 +108,341 @@ st.markdown("那些不是很友好的数据例如`Name`，`Ticket`等等，种�
 st.code('''
 from sklearn.preprocessing import LabelEncoder#这里需要导入额外的库
 # 实例化 LabelEncoder
-label_encoder = LabelEncoder()
-# 对 'Sex' 和 'Embarked' 这两个分类变量进行编码
-df_train['Sex'] = label_encoder.fit_transform(df_train['Sex'])
-# 为了保证 'Embarked' 使用同一个 label_encoder 实例，这里先填充缺失值，再进行转换
-df_train['Embarked'] = label_encoder.fit_transform(df_train['Embarked'].fillna('S'))
+# 对 'Sex' 列进行编码
+label_encoder_sex = LabelEncoder()
+df_train['Sex'] = label_encoder_sex.fit_transform(df_train['Sex'])
+# 对 'Embarked' 列进行编码，先填充缺失值
+df_train['Embarked'].fillna('S', inplace=True)#S是最常见的港口
+label_encoder_embarked = LabelEncoder()
+df_train['Embarked'] = label_encoder_embarked.fit_transform(df_train['Embarked'])
         ''')
 # 实例化 LabelEncoder
-label_encoder = LabelEncoder()
-# 对 'Sex' 和 'Embarked' 这两个分类变量进行编码
-df_train['Sex'] = label_encoder.fit_transform(df_train['Sex'])
-# 为了保证 'Embarked' 使用同一个 label_encoder 实例，这里先填充缺失值，再进行转换
-df_train['Embarked'] = label_encoder.fit_transform(df_train['Embarked'].fillna('S'))
+# 对 'Sex' 列进行编码
+label_encoder_sex = LabelEncoder()
+df_train['Sex'] = label_encoder_sex.fit_transform(df_train['Sex'])
+# 对 'Embarked' 列进行编码，先填充缺失值
+df_train['Embarked'].fillna('S', inplace=True)#S是最常见的港口
+label_encoder_embarked = LabelEncoder()
+df_train['Embarked'] = label_encoder_embarked.fit_transform(df_train['Embarked'])
+
 st.write(df_train)
-st.markdown("可以，看上去很完美，`Sex`被编码成了0 1，`Embarked`被编码成了0 1 2")
+st.markdown("可以，非常完美，`Sex`被编码成了0 1，`Embarked`被编码成了0 1 2")
+
+st.header("特征工程")
+st.markdown("### icing on the cake")
+
+st.markdown('或许你想在进行编码之后我们基本就处理完了数据，我们可以丢掉一些基本没什么意义的特征，马上进行机器学习的处理')
+st.markdown('但用你聪明的脑袋瓜想一想，实际上我们可以根据这些没什么意义的特征`创造`出一些有意义的特征，这或许有助于提升机器学习的性能')
+st.markdown('让我们回到kaggle赛题页面，在[Data一页](https://www.kaggle.com/competitions/titanic/data)的说明中。所有变量的详细说明都在这里')
+
+# 创建两列布局，第一个参数是每列的相对宽度
+col1, col2 = st.columns([2, 1])  # 你可以调整这里的数字来改变列的相对宽度
+with col1:  # 使用with语句指定接下来的内容应该放在哪一列
+    st.markdown('''
+    **变量说明：**
+
+    - **pclass**：社会经济地位（SES）的代理指标
+        - 1st = 上层
+        - 2nd = 中层
+        - 3rd = 下层
+    - **age**：年龄，如果小于1岁则为小数。如果年龄是估计的，以xx.5的形式表示
+    - **sibsp**：数据集以这种方式定义家庭关系...
+        - 兄弟姐妹 = 兄弟、姐妹、继兄、继姐
+        - 配偶 = 丈夫、妻子（情妇和未婚夫被忽略）（可以，很炸裂）
+        - sibsp其实就是Sibling 和 Spouse 合体，大家可以自己去看原页面
+    - **parch**：数据集以这种方式定义家庭关系...
+        - 父母 = 母亲、父亲
+        - 子女 = 女儿、儿子、继女、继子
+        - 有些儿童只是和保姆一起旅行，因此对他们来说parch=0。
+    ''')
+with col2:
+    # 使用empty来创建上方的空白区域
+    for _ in range(7):  # 这里的数字10可以根据需要增加或减少
+        st.markdown("<br>", unsafe_allow_html=True)
+    # 设置图片位置，可能需要调整空白区域的高度以达到居中效果
+    st.image('imageandvoice/cat3.png', width=250)
+    # 使用empty来创建下方的空白区域
+
+
+
+st.markdown('基于SibSp和Parch我们可以FamilySize和IsAlone特征,表示某个乘客的家庭大小 与 是否独身一人')
+st.code('''
+# 创建 'FamilySize' 特征
+df_train['FamilySize'] = df_train['SibSp'] + df_train['Parch'] + 1# 加1是因为还有自己嘛
+# 创建 'IsAlone' 特征
+df_train['IsAlone'] = 0
+df_train.loc[df_train['FamilySize'] == 1, 'IsAlone'] = 1
+''',language='python')
+# 创建 'FamilySize' 特征
+df_train['FamilySize'] = df_train['SibSp'] + df_train['Parch'] + 1# 加1是因为还有自己嘛
+# 创建 'IsAlone' 特征
+df_train['IsAlone'] = 0
+df_train.loc[df_train['FamilySize'] == 1, 'IsAlone'] = 1
+
+st.markdown("### 删除不必要的列")
+st.code("df_train.drop(['Cabin', 'Ticket', 'Name', 'PassengerId'], axis=1, inplace=True #cabin在这里就被删除了",language='python')
+# 删除可能对模型不太有用的列
+df_train.drop(['Cabin', 'Ticket', 'Name', 'PassengerId'], axis=1, inplace=True)
+st.markdown('OK,现在的数据看上去就非常完美了！')
+df_train
+
+st.header('机器学习')
+st.markdown('在进行完训练集的测试后我们就可以开始进行机器学习了！')
+st.markdown(':blue[代码其实很简单！大家重在理解]')
+
+st.code('''
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# 定义特征和目标变量
+X = df_train.drop('Survived', axis=1)  # 从训练数据中除去'Survived'列，剩下的用作特征
+y = df_train['Survived']  # 将'Survived'列用作目标变量
+
+# 将数据分割为训练集和验证集
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 初始化随机森林分类器
+rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# 训练模型
+rf_classifier.fit(X_train, y_train)
+
+# 在验证集上进行预测
+y_pred = rf_classifier.predict(X_val)
+
+# 计算准确率
+accuracy = accuracy_score(y_val, y_pred)
+print("随机森林模型的准确率是:",accuracy)  # 输出准确率
+
+        ''',language='python')
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# 定义特征和目标变量
+X = df_train.drop('Survived', axis=1)  # 从训练数据中除去'Survived'列，剩下的用作特征
+y = df_train['Survived']  # 将'Survived'列用作目标变量
+
+# 将数据分割为训练集和验证集
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 初始化随机森林分类器
+rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# 训练模型
+rf_classifier.fit(X_train, y_train)
+
+# 在验证集上进行预测
+y_pred = rf_classifier.predict(X_val)
+
+# 计算准确率
+accuracy = accuracy_score(y_val, y_pred)
+
+st.write("### 随机森林模型的准确率是:",accuracy)
+st.markdown("随机森林模型在验证集上的准确率为约80.45%!这是一个非常不错的的初始结果!👍👍👍")
 
 
 
 
 
+st.markdown('''
+一些说明（Chat一下，你就知道）
+
+1. **导入必要的库和函数**：代码开始于导入`train_test_split`函数用于数据分割，`RandomForestClassifier`用于构建随机森林模型，以及`accuracy_score`用于计算预测准确率。
+
+2. **定义特征和目标变量**：从`df_train`数据帧中分离出特征（`X`）和目标变量（`y`）。特征包括了除了`Survived`列之外的所有列，而`Survived`列是作为目标变量。
+
+3. **分割数据为训练集和验证集**：使用`train_test_split`函数将数据随机分割为训练集和验证集，其中验证集占总数据的20%。
+
+4. **初始化随机森林分类器**：创建一个随机森林分类器实例，指定树的数量为100，并设置随机状态以确保结果的可重复性。
+
+5. **训练模型**：使用训练数据（特征和目标变量）训练随机森林分类器。
+
+6. **在验证集上进行预测**：使用训练好的模型在验证集的特征上进行预测。
+
+7. **计算准确率**：通过比较验证集的真实目标变量和模型预测结果来计算准确率。
+            ''')
 
 
 
+##其他模型的选择与可视化
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+import xgboost as xgb
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
+
+# 假设df_train是已经加载进来的Pandas DataFrame
+# 这里用随机数据生成一个示例DataFrame
+# 你应该用实际的数据替换这一部分
+# Streamlit应用开始
+st.markdown('### 不同模型的预测效果')
+st.markdown('当然了，你完全可以选择不同的模型进行训练预测，一切依据你的喜好与认知，这里:blue[只提供不同的测试选项]，具体代码相信大家可以自己写出来')
+st.markdown('当然了模型基本都是sklearn的模型，xgboost需要额外下包')
+
+# 选择模型类型
+model_type = st.selectbox(
+    '选择一个模型类型📝',
+    ('随机森林', '逻辑回归', '支持向量机','XGBoost','决策树','K最近邻','朴素贝叶斯','梯度提升树','AdaBoost')
+)
+# 根据选定的模型类型显示参数调整UI
+if model_type == '随机森林':
+    n_estimators = st.slider('树的数量', min_value=10, max_value=200, value=100)
+    model = RandomForestClassifier(n_estimators=n_estimators, random_state=42)
+elif model_type == '逻辑回归':
+    C = st.slider('正则化强度的倒数', min_value=0.01, max_value=1.0, value=1.0)
+    model = LogisticRegression(C=C, random_state=42)
+elif model_type == '支持向量机':
+    C = st.slider('正则化参数', min_value=0.01, max_value=1.0, value=1.0)
+    model = SVC(C=C, probability=True, random_state=42)
+elif model_type == 'XGBoost':
+    max_depth = st.slider('最大树深度', min_value=3, max_value=10, value=6)
+    n_estimators = st.slider('树的数量', min_value=10, max_value=200, value=100)
+    learning_rate = st.slider('学习率', min_value=0.01, max_value=0.3, value=0.1)
+    model = xgb.XGBClassifier(max_depth=max_depth, n_estimators=n_estimators, learning_rate=learning_rate, random_state=42)
+elif model_type == '决策树':
+    max_depth = st.slider('最大树深度', min_value=1, max_value=10, value=3)
+    model = DecisionTreeClassifier(max_depth=max_depth, random_state=42)
+elif model_type == 'K最近邻':
+    n_neighbors = st.slider('邻居数量', min_value=1, max_value=10, value=5)
+    model = KNeighborsClassifier(n_neighbors=n_neighbors)
+elif model_type == '朴素贝叶斯':
+    model = GaussianNB()
+elif model_type == '梯度提升树':
+    n_estimators = st.slider('树的数量', min_value=10, max_value=200, value=100)
+    learning_rate = st.slider('学习率', min_value=0.01, max_value=0.3, value=0.1)
+    model = GradientBoostingClassifier(n_estimators=n_estimators, learning_rate=learning_rate, random_state=42)
+elif model_type == 'AdaBoost':
+    n_estimators = st.slider('树的数量', min_value=10, max_value=200, value=50)
+    learning_rate = st.slider('学习率', min_value=0.01, max_value=1.0, value=1.0)
+    model = AdaBoostClassifier(n_estimators=n_estimators, learning_rate=learning_rate, random_state=42)
+
+# 分割数据
+X = df_train.drop('Survived', axis=1)  # 从训练数据中除去'Survived'列，剩下的用作特征
+y = df_train['Survived']  # 将'Survived'列用作目标变量
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 训练模型
+model.fit(X_train, y_train)
+
+# 预测
+y_pred = model.predict(X_val)
+
+# 计算准确率
+accuracy = accuracy_score(y_val, y_pred)
+
+# 显示准确率
+st.write(f'### 模型的准确率高达: `{accuracy}`')
+
+st.header('真正的预测')
+st.markdown('前面的机器学习都是在对训练集进行操作，现在我们需要将训练好的模型应用到测试集上')
+st.markdown('为了保证数据的格式等都是对应的，我们需要对测试集进行与训练集同样的处理')
+
+st.markdown('### 对测试集数据进行处理')
+
+st.code('''
+# 加载测试数据集
+df_test = pd.read_csv('titanic_data/test.csv')
+
+# 使用训练数据集的中位数填充 'Age' 和 'Fare' 列的缺失值
+df_test['Age'].fillna(df_train['Age'].median(), inplace=True)
+df_test['Fare'].fillna(df_train['Fare'].median(), inplace=True)
+
+# 基于 'Cabin' 信息创建 'HasCabin' 特征
+df_test['HasCabin'] = df_test['Cabin'].notnull().astype(int)
+
+# 创建 'FamilySize' 特征
+df_test['FamilySize'] = df_test['SibSp'] + df_test['Parch'] + 1
+
+# 创建 'IsAlone' 特征
+df_test['IsAlone'] = 0
+df_test.loc[df_test['FamilySize'] == 1, 'IsAlone'] = 1
+
+# 编码处理
+df_test['Sex'] = label_encoder_sex.transform(df_test['Sex'])
+df_test['Embarked'].fillna(df_train['Embarked'].mode()[0], inplace=True)
+df_test['Embarked'] = label_encoder_embarked.transform(df_test['Embarked'])
+        
+# 删除可能对模型没什么用的列
+df_test.drop(['Cabin', 'Ticket', 'Name', 'PassengerId'], axis=1, inplace=True)
+
+        ''')
+
+# 加载测试数据集
+df_test = pd.read_csv('titanic_data/test.csv')
+# 使用训练数据集的中位数填充 'Age' 和 'Fare' 列的缺失值
+df_test['Age'].fillna(df_train['Age'].median(), inplace=True)
+df_test['Fare'].fillna(df_train['Fare'].median(), inplace=True)
+
+# 基于 'Cabin' 信息创建 'HasCabin' 特征
+df_test['HasCabin'] = df_test['Cabin'].notnull().astype(int)
+
+# 创建 'FamilySize' 特征
+df_test['FamilySize'] = df_test['SibSp'] + df_test['Parch'] + 1
+
+# 创建 'IsAlone' 特征
+df_test['IsAlone'] = 0
+df_test.loc[df_test['FamilySize'] == 1, 'IsAlone'] = 1
+
+# 使用训练集中最常见的港口信息填充 'Embarked' 列的缺失值
+df_test['Embarked'].fillna(df_train['Embarked'].mode()[0], inplace=True)
+df_test['Sex'] = label_encoder_sex.transform(df_test['Sex'])
+df_test['Embarked'] = label_encoder_embarked.transform(df_test['Embarked'])
+# 删除可能对模型较少帮助的列
+df_test.drop(['Cabin', 'Ticket', 'Name', 'PassengerId'], axis=1, inplace=True)
+
+# 展示测试数据集的前几行以验证
+df_test
+
+st.markdown("### 使用随机森林模型对测试集进行预测")
+st.code('''
+# 使用随机森林模型对测试集进行预测
+y_pred = rf_classifier.predict(df_test)
+        
+# 输出预测结果
+st.write(y_pred)
+        
+# 将预测结果保存到CSV文件中，保存一个包含乘客ID和他们的生存预测的文件
+# 创建一个DataFrame来保存结果
+submission = pd.DataFrame({
+    "PassengerId": test_df_with_ids['PassengerId'],
+    "Survived": y_pred
+})
+        
+# 保存结果到CSV文件
+submission.to_csv('titanic_data/titanic_predictions.csv', index=False)
+
+        ''')
+# 使用随机森林模型对测试集进行预测
+y_pred = rf_classifier.predict(df_test)
+
+# 如果你需要将预测结果保存到CSV文件中，假设你想要保存一个包含乘客ID和他们的生存预测的文件
+# 首先，重新加载测试数据集以获取PassengerId
+test_df_with_ids = pd.read_csv('titanic_data/test.csv')
+# 确保预测结果的数量与乘客ID的数量相匹配
+assert len(y_pred) == len(test_df_with_ids), "结果的数量与乘客ID的数量不匹配"
+
+# 创建一个DataFrame来保存结果
+submission = pd.DataFrame({
+    "PassengerId": test_df_with_ids['PassengerId'],
+    "Survived": y_pred
+})
+# 保存结果到CSV文件
+submission.to_csv('titanic_data/titanic_predictions.csv', index=False)
+st.header("预测的结果")
+# 显示保存的文件头部以确认
+st.write(submission)
+st.markdown("现在我们就可以预测出这些人的生存状态了，我们可以把结果交到kaggle上看看结果如何😆")
+st.markdown("在kaggle赛题页面右上角点集Submit Prediction即可提交结果")
+
+st.image("imageandvoice/score.png",width=1200)
+st.markdown("很棒！得分是0.75119，这样的得分在滚动排行榜上的排名大约在1w名左右，但是没有过1w，能否超越1w就看大家努力了😏")
+
+st.header("来点拓扑")
+st.markdown("敬请期待...")
